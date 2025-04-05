@@ -12,9 +12,12 @@ describe('Employee List', () => {
     // Verify the data grid is loaded
     cy.get('.MuiDataGrid-root').should('be.visible');
 
-    // Verify the initial employees are displayed
+    // Verify the initial employees are displayed with data-testid
+    cy.get('[data-testid="employee-row-0"]').should('be.visible');
     cy.contains('John123').should('be.visible');
     cy.contains('Doe123').should('be.visible');
+
+    cy.get('[data-testid="employee-row-1"]').should('be.visible');
     cy.contains('Jane123').should('be.visible');
     cy.contains('Smith123').should('be.visible');
 
@@ -26,16 +29,16 @@ describe('Employee List', () => {
   });
 
   it('should navigate to edit employee page when edit button is clicked', () => {
-    // Find and click the first edit button
-    cy.get('[aria-label="Edit employee"]').first().click();
+    // Find and click the first edit button with data-testid
+    cy.get('[data-testid="edit-employee-0"]').first().click();
 
     // Verify we've navigated to the edit employee page
     cy.url().should('include', '/employees/edit/');
   });
 
   it('should open delete confirmation dialog when delete button is clicked', () => {
-    // Find and click the first delete button
-    cy.get('[aria-label="Delete employee"]').first().click();
+    // Find and click the first delete button with data-testid
+    cy.get('[data-testid="delete-employee-0"]').first().click();
 
     // Verify the delete confirmation dialog is displayed
     cy.contains('Confirm Delete').should('be.visible');
@@ -48,7 +51,7 @@ describe('Employee List', () => {
 
   it('should close delete confirmation dialog when cancel is clicked', () => {
     // Open the delete dialog
-    cy.get('[aria-label="Delete employee"]').first().click();
+    cy.get('[data-testid="delete-employee-0"]').first().click();
 
     // Click cancel
     cy.contains('button', 'Cancel').click();

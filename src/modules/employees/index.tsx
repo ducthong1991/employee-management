@@ -108,13 +108,15 @@ const EmployeeList = () => {
       filterable: false,
       renderCell: (params: GridRenderCellParams) => {
         const row = params.row as Employee;
+        const rowIndex = (employees || []).findIndex(emp => emp.id === row.id);
         return (
-          <>
+          <Box data-testid={`employee-row-${rowIndex}`}>
             <IconButton
               component={Link}
               to={`/employees/edit/${row.id}`}
               size="small"
               aria-label="Edit employee"
+              data-testid={`edit-employee-${rowIndex}`}
             >
               <EditIcon />
             </IconButton>
@@ -123,10 +125,11 @@ const EmployeeList = () => {
               size="small"
               onClick={() => openDeleteDialog(row.id)}
               aria-label="Delete employee"
+              data-testid={`delete-employee-${rowIndex}`}
             >
               <DeleteIcon />
             </IconButton>
-          </>
+          </Box>
         );
       },
     },
@@ -142,6 +145,7 @@ const EmployeeList = () => {
           startIcon={<AddIcon />}
           component={Link}
           to="/employees/new"
+          data-testid="add-employee-button"
         >
           Add Employee
         </Button>
