@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useBlocker, useNavigate } from 'react-router-dom';
+import { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { To } from 'react-router-dom';
 
 interface UseNavigationGuardOptions {
   /**
    * When this is true, navigation will be blocked
    */
-  isDirty: boolean;
+  shouldBlock: boolean;
   /**
    * Called when the user confirms they want to navigate away
    */
@@ -18,99 +18,64 @@ interface UseNavigationGuardOptions {
 }
 
 /**
- * A hook that provides a complete solution for guarding navigation
- * when a form has unsaved changes. Works with both React Router
- * navigation and browser refresh/close events.
+ * A simplified navigation guard hook that doesn't rely on React Router's
+ * blocking mechanisms. Instead, it just provides a clean interface for
+ * showing a confirmation dialog when the user tries to navigate away.
  */
-export function useNavigationGuard({ isDirty, onConfirm, onCancel }: UseNavigationGuardOptions) {
+export function useNavigationGuard({
+  shouldBlock,
+  onConfirm,
+  onCancel,
+}: UseNavigationGuardOptions) {
   const [showPrompt, setShowPrompt] = useState(false);
   const [pendingLocation, setPendingLocation] = useState<To | null>(null);
   const navigate = useNavigate();
 
-  // Handle browser close/refresh
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
-      }
-    };
-
-    if (isDirty) {
-      window.addEventListener('beforeunload', handleBeforeUnload);
-    }
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [isDirty]);
-
-  // Create a blocker for React Router navigation
-  const blocker = useBlocker(
-    // Only block if form is dirty
-    useCallback(() => isDirty, [isDirty])
-  );
-
-  // When navigation is blocked, show our prompt
-  useEffect(() => {
-    if (blocker.state === 'blocked' && isDirty) {
-      setShowPrompt(true);
-      setPendingLocation(blocker.location);
-    } else {
-      setShowPrompt(false);
-    }
-  }, [blocker, isDirty]);
-
-  // Handle user's decision
+  // Handle user's decision to proceed with navigation
   const handleConfirm = useCallback(() => {
-    setShowPrompt(false);
-
-    // Call the onConfirm callback if provided
-    onConfirm?.();
-
-    // Store the location before resetting anything
+    // Store the location we want to navigate to
     const locationToNavigateTo = pendingLocation;
 
-    // Reset pending state
-    setPendingLocation(null);
-
-    // Reset the blocker
-    if (blocker.state === 'blocked') {
-      blocker.reset();
+    // First call the onConfirm callback if provided
+    if (onConfirm) {
+      onConfirm();
     }
 
-    // Now manually navigate to the desired location
-    if (locationToNavigateTo) {
-      // Small delay to ensure state updates have completed
-      setTimeout(() => {
-        navigate(locationToNavigateTo);
-      }, 10);
-    }
-  }, [blocker, navigate, pendingLocation, onConfirm]);
-
-  const handleCancel = useCallback(() => {
+    // Hide the prompt
     setShowPrompt(false);
     setPendingLocation(null);
 
+    // Navigate to the target location
+    if (locationToNavigateTo) {
+      navigate(locationToNavigateTo);
+    }
+  }, [navigate, pendingLocation, onConfirm]);
+
+  // Handle user's decision to cancel navigation
+  const handleCancel = useCallback(() => {
     // Call the onCancel callback if provided
-    onCancel?.();
+    if (onCancel) {
+      onCancel();
+    }
 
-    // Reset the blocker
-    blocker.reset?.();
-  }, [blocker, onCancel]);
+    // Reset state
+    setShowPrompt(false);
+    setPendingLocation(null);
+  }, [onCancel]);
 
-  // Navigate without triggering the prompt
+  // Function to initiate navigation with confirmation if needed
   const navigateSafely = useCallback(
     (to: To) => {
-      if (isDirty) {
+      if (shouldBlock) {
+        // If we should block, show the prompt
         setShowPrompt(true);
         setPendingLocation(to);
       } else {
+        // Otherwise just navigate
         navigate(to);
       }
     },
-    [isDirty, navigate]
+    [shouldBlock, navigate]
   );
 
   return {
