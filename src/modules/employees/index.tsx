@@ -16,6 +16,7 @@ import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/ico
 import { useState } from 'react';
 import { Employee } from './types';
 import { useEmployeesQuery, useDeleteEmployeeMutation } from './api/queries';
+import { formatDate } from '@/utils/dateUtils';
 
 const EmployeeList = () => {
   const { data: employees, isLoading } = useEmployeesQuery();
@@ -40,16 +41,6 @@ const EmployeeList = () => {
           closeDeleteDialog();
         },
       });
-    }
-  };
-
-  // Format date function
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString();
-    } catch (e) {
-      return dateString;
     }
   };
 
@@ -84,6 +75,7 @@ const EmployeeList = () => {
       field: 'dateOfBirth',
       headerName: 'Date of Birth',
       flex: 1,
+      valueGetter: value => formatDate(value),
     },
     {
       field: 'position',
@@ -99,6 +91,7 @@ const EmployeeList = () => {
       field: 'joinedDate',
       headerName: 'Joined Date',
       flex: 1,
+      valueGetter: value => formatDate(value),
     },
     {
       field: 'actions',
@@ -169,32 +162,50 @@ const EmployeeList = () => {
       </Paper>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
+      <DeleteConfirmationDialog
         open={deleteDialogOpen}
         onClose={closeDeleteDialog}
-        aria-labelledby="delete-dialog-title"
-        aria-describedby="delete-dialog-description"
-      >
-        <DialogTitle id="delete-dialog-title">Confirm Delete</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete this employee? This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeDeleteDialog}>Cancel</Button>
-          <Button
-            onClick={confirmDelete}
-            color="error"
-            variant="contained"
-            disabled={deleteEmployeeMutation.isPending}
-          >
-            {deleteEmployeeMutation.isPending ? 'Deleting...' : 'Delete'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={confirmDelete}
+        isDeleting={deleteEmployeeMutation.isPending}
+      />
     </div>
   );
 };
 
 export default EmployeeList;
+
+interface DeleteConfirmationDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isDeleting: boolean;
+}
+
+const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
+  open,
+  onClose,
+  onConfirm,
+  isDeleting,
+}) => {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      aria-labelledby="delete-dialog-title"
+      aria-describedby="delete-dialog-description"
+    >
+      <DialogTitle id="delete-dialog-title">Confirm Delete</DialogTitle>
+      <DialogContent>
+        <DialogContentText id="delete-dialog-description">
+          Are you sure you want to delete this employee? This action cannot be undone.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onConfirm} color="error" variant="contained" disabled={isDeleting}>
+          {isDeleting ? 'Deleting...' : 'Delete'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
