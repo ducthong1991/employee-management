@@ -60,6 +60,7 @@ const router = createBrowserRouter([
 
 function App() {
   useEffect(() => {
+    // For mock data
     initializeEmployeeData();
   }, []);
 
