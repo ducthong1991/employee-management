@@ -82,8 +82,6 @@ const EditEmployee = () => {
     );
   }
 
-  const { id: _, ...formData } = existingEmployee;
-
   return (
     <>
       <NavigationPrompt
@@ -94,7 +92,7 @@ const EditEmployee = () => {
       />
 
       <EmployeeForm
-        defaultValues={formData}
+        defaultValues={existingEmployee}
         isEditMode={true}
         isSubmitting={updateEmployeeMutation.isPending}
         onSubmit={handleSubmit}
